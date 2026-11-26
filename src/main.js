@@ -222,6 +222,7 @@ function timeHtml(seconds) {
 }
 
 function render() {
+  closeMoveMenu();
   rowsEl.textContent = '';
   let videoNum = 0;
 
@@ -247,6 +248,7 @@ function render() {
         ${it.type === 'video' && it.fileName ? `<div class="orig muted" title="Archivo original"></div>` : ''}
       </td>
       <td class="col-actions">
+        <button type="button" class="icon" data-act="move" title="Mover a otra pestaña" aria-label="Mover a otra pestaña" aria-haspopup="menu">⇄</button>
         <button type="button" class="icon" data-act="up" title="Subir" aria-label="Subir">↑</button>
         <button type="button" class="icon" data-act="down" title="Bajar" aria-label="Bajar">↓</button>
         <button type="button" class="icon remove" data-act="remove" title="Eliminar" aria-label="Eliminar">✕</button>
@@ -478,6 +480,10 @@ rowsEl.addEventListener('click', (e) => {
   const idx = cur().items.indexOf(itemOf(btn));
   if (idx < 0) return;
   const act = btn.dataset.act;
+  if (act === 'move') {
+    toggleMoveMenu(btn, cur().items[idx]);
+    return;
+  }
   if (act === 'remove') {
     cur().items.splice(idx, 1);
   } else {
@@ -491,6 +497,95 @@ rowsEl.addEventListener('click', (e) => {
     rowsEl.querySelector(`tr[data-id="${cur().items[act === 'up' ? idx - 1 : idx + 1].id}"] button[data-act="${act}"]`)?.focus();
   }
 });
+
+/* ---------- Mover a otra pestaña ---------- */
+
+let moveMenu = null;
+
+function closeMoveMenu({ focusButton = false } = {}) {
+  if (!moveMenu) return;
+  const { el, button } = moveMenu;
+  el.remove();
+  button.setAttribute('aria-expanded', 'false');
+  moveMenu = null;
+  if (focusButton && button.isConnected) button.focus();
+}
+
+function toggleMoveMenu(button, item) {
+  const wasOpenHere = moveMenu?.button === button;
+  closeMoveMenu();
+  if (wasOpenHere) return;
+
+  const el = document.createElement('div');
+  el.className = 'menu';
+  el.setAttribute('role', 'menu');
+
+  const title = document.createElement('div');
+  title.className = 'menu-title';
+  title.textContent = 'Mover a';
+  el.appendChild(title);
+
+  const others = state.tabs.filter((t) => t.id !== state.activeTab);
+  if (!others.length) {
+    const empty = document.createElement('div');
+    empty.className = 'menu-empty';
+    empty.textContent = 'No hay otras pestañas';
+    el.appendChild(empty);
+  }
+  for (const tab of others) {
+    const opt = document.createElement('button');
+    opt.type = 'button';
+    opt.className = 'menu-item';
+    opt.setAttribute('role', 'menuitem');
+    opt.textContent = tab.name;
+    opt.addEventListener('click', () => {
+      closeMoveMenu();
+      moveItemToTab(item, tab);
+    });
+    el.appendChild(opt);
+  }
+
+  document.body.appendChild(el);
+  moveMenu = { el, button };
+  button.setAttribute('aria-expanded', 'true');
+
+  // Se ubica junto al botón; si no entra abajo, se abre hacia arriba.
+  const r = button.getBoundingClientRect();
+  const m = el.getBoundingClientRect();
+  const left = Math.min(Math.max(8, r.right - m.width), window.innerWidth - m.width - 8);
+  const below = r.bottom + 4;
+  const top = below + m.height > window.innerHeight - 8 ? Math.max(8, r.top - m.height - 4) : below;
+  el.style.left = `${left + window.scrollX}px`;
+  el.style.top = `${top + window.scrollY}px`;
+
+  el.querySelector('.menu-item')?.focus();
+}
+
+function moveItemToTab(item, tab) {
+  const idx = cur().items.indexOf(item);
+  if (idx < 0) return;
+  cur().items.splice(idx, 1);
+  tab.items.push(item);
+  setStatus(`"${item.name}" se movió a ${tab.name}.`);
+  commit();
+}
+
+document.addEventListener('pointerdown', (e) => {
+  if (moveMenu && !moveMenu.el.contains(e.target) && e.target !== moveMenu.button) closeMoveMenu();
+});
+document.addEventListener('keydown', (e) => {
+  if (!moveMenu) return;
+  if (e.key === 'Escape') closeMoveMenu({ focusButton: true });
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    const items = [...moveMenu.el.querySelectorAll('.menu-item')];
+    if (!items.length) return;
+    e.preventDefault();
+    const i = items.indexOf(document.activeElement);
+    const next = e.key === 'ArrowDown' ? (i + 1) % items.length : (i - 1 + items.length) % items.length;
+    items[next].focus();
+  }
+});
+window.addEventListener('resize', () => closeMoveMenu());
 
 /* ---------- Reordenar arrastrando ---------- */
 

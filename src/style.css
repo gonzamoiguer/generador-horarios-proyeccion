@@ -152,7 +152,7 @@ input[type='text'], input[type='time'], select {
 .col-num { width: 32px; text-align: right; }
 .col-time { width: 96px; white-space: nowrap; }
 .col-dur { width: 110px; }
-.col-actions { width: 104px; text-align: right; white-space: nowrap; }
+.col-actions { width: 136px; text-align: right; white-space: nowrap; }
 
 .handle { cursor: grab; color: #b0b0b6; user-select: none; letter-spacing: -2px; padding: 4px; }
 .handle:hover { color: var(--text); }
@@ -191,3 +191,32 @@ button.icon.remove:hover { color: var(--danger); }
   .container { padding: 20px 16px 48px; }
   .actions { margin-left: 0; }
 }
+
+/* Menú "Mover a" */
+.menu {
+  position: absolute;
+  z-index: 10;
+  min-width: 180px;
+  max-width: 280px;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 4px;
+}
+.menu-title { font-size: 12px; color: var(--muted); padding: 6px 10px 4px; }
+.menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-radius: 4px;
+  padding: 6px 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.menu-item:hover, .menu-item:focus-visible { background: var(--accent-soft); outline: none; }
+.menu-empty { padding: 6px 10px; color: var(--muted); font-size: 13px; }
