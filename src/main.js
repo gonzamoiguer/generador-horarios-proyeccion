@@ -244,8 +244,8 @@ function render() {
       </td>
       <td class="col-name">
         <input class="name" type="text" aria-label="Nombre" />
+        ${it.type === 'video' && it.fileName ? `<div class="orig muted" title="Archivo original"></div>` : ''}
       </td>
-      <td class="col-file muted"></td>
       <td class="col-actions">
         <button type="button" class="icon" data-act="up" title="Subir" aria-label="Subir">↑</button>
         <button type="button" class="icon" data-act="down" title="Bajar" aria-label="Bajar">↓</button>
@@ -254,9 +254,11 @@ function render() {
 
     tr.querySelector('.dur').value = it.duration == null ? '' : formatDuration(it.duration);
     tr.querySelector('.name').value = it.name;
-    const fileCell = tr.querySelector('.col-file');
-    fileCell.textContent = it.fileName || '';
-    fileCell.title = it.fileName || '';
+    const orig = tr.querySelector('.orig');
+    if (orig) {
+      orig.textContent = it.fileName;
+      orig.hidden = it.fileName === it.name;
+    }
 
     rowsEl.appendChild(tr);
   }
@@ -282,7 +284,7 @@ function updateTimes() {
     ? `<td></td><td></td><td class="muted">Total</td>
        <td class="col-time mono">${timeHtml(end)}</td>
        <td class="mono">${formatDuration(total)}</td>
-       <td class="muted" colspan="3">${videos.length} video${videos.length === 1 ? '' : 's'}${
+       <td class="muted" colspan="2">${videos.length} video${videos.length === 1 ? '' : 's'}${
          missing ? ` · <span class="warn">${missing} sin duración</span>` : ''
        }</td>`
     : '';
@@ -313,7 +315,7 @@ async function addFiles(files) {
   const added = videos.map((file) => ({
     id: newId(),
     type: 'video',
-    name: file.name.replace(/\.[^.]+$/, '') || file.name,
+    name: file.name,
     fileName: file.name,
     duration: null,
     loading: true,
@@ -444,6 +446,8 @@ rowsEl.addEventListener('input', (e) => {
   const it = itemOf(e.target);
   if (it) {
     it.name = e.target.value;
+    const orig = e.target.parentElement.querySelector('.orig');
+    if (orig) orig.hidden = it.fileName === it.name;
     save();
   }
 });
@@ -612,7 +616,7 @@ function csvText() {
     it.name,
     it.fileName || '',
   ]);
-  return buildCsv([['Inicio', 'Fin', 'Duración', 'Nombre', 'Archivo'], ...rows], state.csvSep === 'tab' ? '\t' : state.csvSep);
+  return buildCsv([['Inicio', 'Fin', 'Duración', 'Nombre', 'Archivo original'], ...rows], state.csvSep === 'tab' ? '\t' : state.csvSep);
 }
 
 async function copyText(text) {

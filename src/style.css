@@ -166,15 +166,8 @@ input[type='text'], input[type='time'], select {
 .grid input.dur:hover, .grid input.name:hover { border-color: var(--border); }
 .grid input.dur:focus, .grid input.name:focus { border-color: var(--border-strong); background: var(--surface); }
 .grid input.invalid { border-color: var(--warn); background: #fff8ec; }
-.grid td.col-file {
-  font-size: 12px;
-  max-width: 220px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  user-select: text;
-}
-.grid td.col-name { min-width: 220px; }
+.orig[hidden] { display: none; }
+.orig { font-size: 11px; padding: 0 7px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 420px; }
 
 .row.sep td { background: var(--sep-bg); }
 .row.sep input.name { font-style: italic; color: var(--muted); }
