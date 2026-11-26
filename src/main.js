@@ -1,6 +1,7 @@
 import { formatDuration, parseDuration, formatClock, parseClock, naturalCompare } from './time.js';
 import { collectFromDataTransfer, isVideoFile, readDuration } from './files.js';
 import { buildCsv } from './csv.js';
+import { buildM3u, pathInFolder } from './playlist.js';
 
 const STORAGE_KEY = 'grilla-proyeccion:v2';
 
@@ -70,6 +71,7 @@ function sanitizeTab(t) {
         type: it.type,
         name: String(it.name ?? ''),
         fileName: typeof it.fileName === 'string' ? it.fileName : it.type === 'video' ? String(it.name ?? '') : '',
+        path: typeof it.path === 'string' ? it.path : undefined,
         duration: Number.isFinite(it.duration) ? it.duration : it.type === 'separator' ? 0 : null,
       }));
   }
@@ -319,6 +321,7 @@ async function addFiles(files) {
     type: 'video',
     name: file.name,
     fileName: file.name,
+    path: pathInFolder(file.relPath || file.name),
     duration: null,
     loading: true,
     file,
@@ -745,16 +748,25 @@ $('#copy-csv').addEventListener('click', async (e) => {
   flash(btn, (await copyText(csvText())) ? 'Copiado ✓' : 'No se pudo copiar');
 });
 
-$('#download-csv').addEventListener('click', (e) => {
-  if (!cur().items.length) return flash(e.currentTarget, 'Grilla vacía');
-  const blob = new Blob(['﻿' + csvText()], { type: 'text/csv;charset=utf-8' });
+function downloadText(text, ext, type) {
+  const blob = new Blob([text], { type });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `${cur().name.replace(/[\\/:*?"<>|]+/g, '-').trim() || 'grilla'}.csv`;
+  a.download = `${cur().name.replace(/[\\/:*?"<>|]+/g, '-').trim() || 'grilla'}.${ext}`;
   document.body.appendChild(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+$('#download-csv').addEventListener('click', (e) => {
+  if (!cur().items.length) return flash(e.currentTarget, 'Grilla vacía');
+  downloadText('\ufeff' + csvText(), 'csv', 'text/csv;charset=utf-8');
+});
+
+$('#download-vlc').addEventListener('click', (e) => {
+  if (!cur().items.some((it) => it.type === 'video')) return flash(e.currentTarget, 'Sin videos');
+  downloadText(buildM3u(cur().items), 'm3u8', 'audio/x-mpegurl;charset=utf-8');
 });
 
 /* ---------- Inicio ---------- */
