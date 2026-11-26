@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grilla de proyección</title>
+    <link rel="stylesheet" href="./src/style.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect x='1' y='3' width='14' height='10' rx='2' fill='%23222'/><path d='M6.5 5.5v5l4-2.5z' fill='%23fff'/></svg>" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <h1>Grilla de proyección</h1>
+        <p class="muted">Cargá los videos, ajustá el orden y obtené los horarios de cada proyección.</p>
+      </header>
+
+      <nav id="tabs" class="tabs" role="tablist" aria-label="Proyecciones"></nav>
+
+      <section class="controls">
+        <div class="field">
+          <label for="start-time">Hora de inicio</label>
+          <input id="start-time" type="time" step="1" value="18:00:00" />
+        </div>
+        <div class="field">
+          <label for="sep-duration">Duración del separador</label>
+          <input id="sep-duration" type="text" value="00:05:00" placeholder="hh:mm:ss" class="mono" />
+        </div>
+        <div class="actions">
+          <button id="add-separator" type="button">+ Separador</button>
+          <button id="separators-between" type="button" title="Inserta un separador entre cada video">Separadores entre todos</button>
+        </div>
+      </section>
+
+      <section id="dropzone" class="dropzone">
+        <p><strong>Arrastrá una carpeta o archivos de video acá</strong></p>
+        <p class="muted">
+          o
+          <button type="button" class="link" id="pick-files">elegí archivos</button>
+          /
+          <button type="button" class="link" id="pick-folder">elegí una carpeta</button>
+        </p>
+        <input id="file-input" type="file" accept="video/*,.mkv,.avi,.mov,.mxf,.m4v,.ts" multiple hidden />
+        <input id="folder-input" type="file" webkitdirectory multiple hidden />
+        <p id="status" class="status muted" aria-live="polite"></p>
+      </section>
+
+      <section class="table-wrap">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th class="col-handle"></th>
+              <th class="col-num">#</th>
+              <th class="col-time">Inicio</th>
+              <th class="col-time">Fin</th>
+              <th class="col-dur">Duración</th>
+              <th>Nombre</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+          <tfoot>
+            <tr id="totals"></tr>
+          </tfoot>
+        </table>
+        <p id="empty" class="empty muted">Todavía no hay elementos en la grilla.</p>
+      </section>
+
+      <section class="export">
+        <div class="field">
+          <label for="separator-char">Separador CSV</label>
+          <select id="separator-char">
+            <option value="tab">Tabulación (pegar directo en Excel)</option>
+            <option value=";">Punto y coma ( ; )</option>
+            <option value=",">Coma ( , )</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button id="sort-name" type="button">Ordenar por nombre</button>
+          <button id="clear" type="button" class="danger">Vaciar</button>
+          <button id="download-csv" type="button">Descargar CSV</button>
+          <button id="copy-csv" type="button" class="primary">Copiar CSV</button>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
