@@ -48,6 +48,17 @@ function saveNow() {
 }
 window.addEventListener('pagehide', saveNow);
 
+// Si la herramienta está abierta en otra pestaña del navegador, se toma su versión.
+window.addEventListener('storage', (e) => {
+  if (e.key !== STORAGE_KEY || !e.newValue) return;
+  if (cur().items.some((it) => it.loading)) return;
+  clearTimeout(saveTimer);
+  state.tabs = [];
+  load();
+  csvSepSelect.value = state.csvSep;
+  renderAll();
+});
+
 function sanitizeTab(t) {
   const tab = makeTab(typeof t?.name === 'string' && t.name.trim() ? t.name : 'Proyección');
   if (typeof t?.id === 'string') tab.id = t.id;
@@ -58,7 +69,7 @@ function sanitizeTab(t) {
         id: it.id,
         type: it.type,
         name: String(it.name ?? ''),
-        fileName: it.fileName,
+        fileName: typeof it.fileName === 'string' ? it.fileName : it.type === 'video' ? String(it.name ?? '') : '',
         duration: Number.isFinite(it.duration) ? it.duration : it.type === 'separator' ? 0 : null,
       }));
   }
@@ -233,8 +244,8 @@ function render() {
       </td>
       <td class="col-name">
         <input class="name" type="text" aria-label="Nombre" />
-        ${it.type === 'video' && it.fileName && it.fileName !== it.name ? `<div class="orig muted" title="Archivo original"></div>` : ''}
       </td>
+      <td class="col-file muted"></td>
       <td class="col-actions">
         <button type="button" class="icon" data-act="up" title="Subir" aria-label="Subir">↑</button>
         <button type="button" class="icon" data-act="down" title="Bajar" aria-label="Bajar">↓</button>
@@ -243,8 +254,9 @@ function render() {
 
     tr.querySelector('.dur').value = it.duration == null ? '' : formatDuration(it.duration);
     tr.querySelector('.name').value = it.name;
-    const orig = tr.querySelector('.orig');
-    if (orig) orig.textContent = it.fileName;
+    const fileCell = tr.querySelector('.col-file');
+    fileCell.textContent = it.fileName || '';
+    fileCell.title = it.fileName || '';
 
     rowsEl.appendChild(tr);
   }
@@ -270,7 +282,7 @@ function updateTimes() {
     ? `<td></td><td></td><td class="muted">Total</td>
        <td class="col-time mono">${timeHtml(end)}</td>
        <td class="mono">${formatDuration(total)}</td>
-       <td class="muted" colspan="2">${videos.length} video${videos.length === 1 ? '' : 's'}${
+       <td class="muted" colspan="3">${videos.length} video${videos.length === 1 ? '' : 's'}${
          missing ? ` · <span class="warn">${missing} sin duración</span>` : ''
        }</td>`
     : '';
@@ -301,7 +313,7 @@ async function addFiles(files) {
   const added = videos.map((file) => ({
     id: newId(),
     type: 'video',
-    name: file.name,
+    name: file.name.replace(/\.[^.]+$/, '') || file.name,
     fileName: file.name,
     duration: null,
     loading: true,
@@ -598,8 +610,9 @@ function csvText() {
     formatClock(schedule[i].end),
     it.duration == null ? '' : formatDuration(it.duration),
     it.name,
+    it.fileName || '',
   ]);
-  return buildCsv([['Inicio', 'Fin', 'Duración', 'Nombre'], ...rows], state.csvSep === 'tab' ? '\t' : state.csvSep);
+  return buildCsv([['Inicio', 'Fin', 'Duración', 'Nombre', 'Archivo'], ...rows], state.csvSep === 'tab' ? '\t' : state.csvSep);
 }
 
 async function copyText(text) {
